@@ -1,0 +1,100 @@
+﻿@* <div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">Chat</a>
+    </div>
+</div>
+ *@
+
+ @inject UserDocumentService UserDocumentService
+
+
+<div class="nav-scrollable">
+    <div @onclick:stopPropagation="true">
+        <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link"
+                     href="javascript:void(0);">
+                <span class="bi bi-list-nested-nav-menu"></span> Chat
+            </NavLink>
+
+            <!-- 📂 File Upload -->
+            <div style="margin-top:10px;">
+                <InputFile @key="fileInputKey"
+                           OnChange="HandleUpload"
+                           multiple
+                           class="form-control"
+                           @onclick:stopPropagation="true" />
+            </div>
+
+            <!-- 🧹 Clear Button -->
+            <div style="margin-top:30px;">
+                    <button class="btn btn-danger mt-2"
+                            type="button"
+                            @onclick="ClearDocs">
+                        Clear Docs
+                    </button>
+            </div>
+
+            <!-- 📄 Uploaded Docs List -->
+            <ul style="margin-top:10px;">
+                @if (UserDocumentService.UploadedDocs.Any())
+                {
+                    foreach (var doc in UserDocumentService.UploadedDocs)
+                    {
+                        <li>@doc</li>
+                    }
+                }
+                else
+                {
+                    <li>No documents</li>
+                }
+            </ul>
+
+            <div style="margin-top:10px;">
+                <label>Chunks:</label>
+                <select class="form-control" @bind="UserDocumentService.SelectedTopK">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+
+        </div>
+
+    </nav>
+    </div>
+</div>
+
+@code {
+
+    private int fileInputKey = 0;
+    protected override void OnInitialized()
+    {
+        UserDocumentService.OnChange += RefreshUI;
+    }
+
+    private void RefreshUI()
+    {
+        InvokeAsync(StateHasChanged);   // 🔥 IMPORTANT
+    }
+
+    private async Task HandleUpload(InputFileChangeEventArgs e)
+    {
+        await UserDocumentService.ProcessFiles(e);
+    }
+
+    private async Task ClearDocs()
+    {
+        UserDocumentService.Clear();
+
+        fileInputKey++;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        UserDocumentService.OnChange -= RefreshUI;
+    }
+}
+
